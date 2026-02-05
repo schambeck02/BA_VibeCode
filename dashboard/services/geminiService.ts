@@ -2,17 +2,34 @@
 import { GoogleGenAI } from "@google/genai";
 
 export class GeminiService {
-  // Use a private instance variable, but ensure it's initialized with the direct env variable.
-  private ai: GoogleGenAI;
+  private ai: GoogleGenAI | null = null;
+  private initialized = false;
 
-  constructor() {
-    /* Always use process.env.API_KEY directly when initializing the GoogleGenAI client instance. */
-    this.ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  private initialize() {
+    if (this.initialized) return;
+    this.initialized = true;
+
+    const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+    if (apiKey) {
+      try {
+        this.ai = new GoogleGenAI({ apiKey });
+      } catch (error) {
+        console.warn("Failed to initialize Gemini AI:", error);
+        this.ai = null;
+      }
+    } else {
+      console.warn("Gemini API key not configured. AI insights will be disabled.");
+    }
   }
 
-  async analyzeESGResults(context: string) {
+  async analyzeESGResults(context: string): Promise<string> {
+    this.initialize();
+
+    if (!this.ai) {
+      return "AI insights unavailable. Set GEMINI_API_KEY in .env.local to enable AI analysis.";
+    }
+
     try {
-      /* Use ai.models.generateContent to query GenAI with both the model name and prompt. */
       const response = await this.ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Analyze the following financial ESG performance data and provide a concise, executive insight (2-3 sentences) for each research question: ${context}`,
@@ -21,7 +38,6 @@ export class GeminiService {
           topP: 0.9,
         }
       });
-      /* The GenerateContentResponse object features a text property that directly returns the string output. */
       return response.text;
     } catch (error) {
       console.error("Gemini analysis failed:", error);

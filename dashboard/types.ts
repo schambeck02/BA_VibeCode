@@ -1,9 +1,9 @@
 
 export enum ESGQuartile {
-  Q1 = 'Q1 (High)',
+  Q1 = 'Q1',
   Q2 = 'Q2',
   Q3 = 'Q3',
-  Q4 = 'Q4 (Low)'
+  Q4 = 'Q4'
 }
 
 export interface ESGScore {
@@ -20,6 +20,7 @@ export interface Company {
   esg: ESGScore;
   quartile: ESGQuartile;
   description?: string;
+  metrics?: PerformanceMetrics;
 }
 
 export interface PerformanceMetrics {

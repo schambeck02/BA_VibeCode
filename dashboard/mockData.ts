@@ -1,61 +1,65 @@
 
 import { Company, ESGQuartile, PerformanceMetrics, DailyReturn } from './types';
 
+import processedData from './data/processed_data.json';
+
 const SECTORS = [
-  'Technology', 'Financials', 'Healthcare', 'Energy', 
+  'Technology', 'Financials', 'Healthcare', 'Energy',
   'Consumer Discretionary', 'Industrials', 'Utilities', 'Real Estate'
 ];
 
-const TICKERS = [
-  'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'BRK.B', 'JPM', 'UNH', 'V',
-  'JNJ', 'XOM', 'TSLA', 'PG', 'MA', 'HD', 'LLY', 'CVX', 'MRK', 'ABBV',
-  'PEP', 'KO', 'AVGO', 'COST', 'TMO', 'PFE', 'ORCL', 'NKE', 'BAC', 'DHR'
-];
+// Helper to ensure quartile is typed correctly if needed, though JSON string should match enum
+const getQuartile = (q: string): ESGQuartile => {
+  switch (q) {
+    case 'Q1': return ESGQuartile.Q1;
+    case 'Q2': return ESGQuartile.Q2;
+    case 'Q3': return ESGQuartile.Q3;
+    case 'Q4': return ESGQuartile.Q4;
+    default: return ESGQuartile.Q4;
+  }
+};
 
 export const generateMockCompanies = (): Company[] => {
-  return TICKERS.map(ticker => {
-    const total = 40 + Math.random() * 55;
-    let quartile: ESGQuartile;
-    if (total > 80) quartile = ESGQuartile.Q1;
-    else if (total > 65) quartile = ESGQuartile.Q2;
-    else if (total > 50) quartile = ESGQuartile.Q3;
-    else quartile = ESGQuartile.Q4;
-
-    return {
-      ticker,
-      name: `${ticker} Corp`,
-      sector: SECTORS[Math.floor(Math.random() * SECTORS.length)],
-      esg: {
-        total,
-        environmental: 30 + Math.random() * 60,
-        social: 30 + Math.random() * 60,
-        governance: 30 + Math.random() * 60,
-      },
-      quartile
-    };
-  });
+  return processedData.companies.map((c: any) => ({
+    ...c,
+    quartile: getQuartile(c.quartile),
+    // Ensure metrics are passed through if needed, types.ts update handles this
+  })) as Company[];
 };
 
 export const calculateQuartileMetrics = (companies: Company[]): Record<ESGQuartile, PerformanceMetrics> => {
+  // Use pre-calculated metrics from JSON if available, otherwise fallback
+  // The JSON structure has quartileMetrics at the top level
+  if ('quartileMetrics' in processedData) {
+    const qm = (processedData as any).quartileMetrics;
+    return {
+      [ESGQuartile.Q1]: qm.Q1,
+      [ESGQuartile.Q2]: qm.Q2,
+      [ESGQuartile.Q3]: qm.Q3,
+      [ESGQuartile.Q4]: qm.Q4,
+    };
+  }
+
+  // Fallback if not present (should be based on python script)
   const base = {
     [ESGQuartile.Q1]: {
-      annualizedReturn: 0.125, sharpeRatio: 1.15, sortinoRatio: 1.45, 
-      volatility: 0.14, maxDrawdown: -0.18, var95: -0.015, var99: -0.025, 
+      annualizedReturn: 0.125, sharpeRatio: 1.15, sortinoRatio: 1.45,
+      volatility: 0.14, maxDrawdown: -0.18, var95: -0.015, var99: -0.025,
       tailRisk: 12, survivalProbability: 0.98, recoveryDays: 45
     },
     [ESGQuartile.Q2]: {
-      annualizedReturn: 0.108, sharpeRatio: 0.95, sortinoRatio: 1.25, 
-      volatility: 0.16, maxDrawdown: -0.22, var95: -0.018, var99: -0.028, 
+      annualizedReturn: 0.108, sharpeRatio: 0.95, sortinoRatio: 1.25,
+      volatility: 0.16, maxDrawdown: -0.22, var95: -0.018, var99: -0.028,
       tailRisk: 18, survivalProbability: 0.96, recoveryDays: 58
     },
     [ESGQuartile.Q3]: {
-      annualizedReturn: 0.085, sharpeRatio: 0.72, sortinoRatio: 0.95, 
-      volatility: 0.19, maxDrawdown: -0.28, var95: -0.022, var99: -0.035, 
+      annualizedReturn: 0.085, sharpeRatio: 0.72, sortinoRatio: 0.95,
+      volatility: 0.19, maxDrawdown: -0.28, var95: -0.022, var99: -0.035,
       tailRisk: 25, survivalProbability: 0.94, recoveryDays: 72
     },
     [ESGQuartile.Q4]: {
-      annualizedReturn: 0.062, sharpeRatio: 0.55, sortinoRatio: 0.68, 
-      volatility: 0.23, maxDrawdown: -0.35, var95: -0.028, var99: -0.045, 
+      annualizedReturn: 0.062, sharpeRatio: 0.55, sortinoRatio: 0.68,
+      volatility: 0.23, maxDrawdown: -0.35, var95: -0.028, var99: -0.045,
       tailRisk: 38, survivalProbability: 0.89, recoveryDays: 95
     }
   };
