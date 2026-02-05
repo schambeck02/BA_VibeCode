@@ -1,0 +1,15 @@
+# Daten & Analyse
+pandas
+numpy
+yfinance
+scipy
+pandas-datareader
+lxml
+
+# Dashboard & Visualisierung
+streamlit
+plotly
+matplotlib
+
+# Hilfsmittel
+requests
